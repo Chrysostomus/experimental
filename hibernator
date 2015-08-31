@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# script to enable hibernation noninteractively, based on powerdown-functions
+shopt -s nullglob extglob
+
+hibernate_offset() {
+    filefrag -v /swapfile | awk 'NR==4 {print $4}' | tr -d .
+}
+
+root_part() {
+    df / | awk 'NR==2 {print $1}'
+}
+
+has_swap_part () {
+    grep -qs swap /etc/fstab
+}
+
+can_suspend_to_disk () {
+    [[ -f /swapfile ]] || has_swap_part
+}
+
+swap_part() {
+    awk '$3=="swap" {print $1; exit}' /etc/fstab
+}
+
+resume_boot_option() {
+    if [[ -f /swapfile ]]; then
+        echo "resume=$(root_part) resume_offset=$(hibernate_offset)"
+    elif has_swap_part; then
+        echo "resume=$(swap_part)"
+    fi
+}
+
+# lock the file until the script finishes
+lock() {
+    local LOCK=/tmp/hibernator.lock
+    if ! mkdir "$LOCK" 2> /dev/null; then
+        echo "Working... $LOCK"
+        exit
+    fi
+    trap "rm -rf $LOCK" EXIT
+}
+
+if [[ $EUID != 0 ]]; then
+    echo "[hibernator] must be run as root"
+    exit 1
+fi
+has_resume_hook () {
+    grep -qs resume /etc/mkinitcpio.conf
+}
+#############################
+lock
+
+if ! can_suspend_to_disk; then
+    echo "[powerdown] your first time to use hibernate"
+    echo "creating 2GB /swapfile"
+    dd if=/dev/zero of=/swapfile bs=2M count=1024
+    chmod 600 /swapfile
+    mkswap /swapfile
+    echo '/swapfile	swap	swap	defaults	0	0' >> /etc/fstab
+    #backup old /etc/default/grub
+    cp /etc/default/grub /etc/default/grub.old \
+    && sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet loglevel=3 vga=current udev.log-priority=3/' /etc/default/grub \
+    && grub-mkconfig -o /boot/grub/grub.cfg
+    #backup old /boot/refind_linux.conf and add kernel parameters to the file
+    cp /boot/refind_linux.conf /boot/refind_linux.conf \
+    &&echo -e "$(head -n 1 /boot/refind_linux.conf)" | \
+    sed 's/\"$/ $(resume_boot_option) loglevel=3 vga=current udev.log-priority=3\"/'\n$(cat /boot/refind_linux.conf)" > /boot/refind_linux.conf
+		if ! has_resume_hook; then
+			cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.old \
+			&&sed -i s/'filesystem/filesystem resume'/g /etc/mknitcpio.conf
+			for kernel in $(mhwd-kernel -li | sed '1,2d' | awk '{print $2}'); do
+			mkinitcpio -p $kernel
+		done
+fi
+fi
