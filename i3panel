@@ -1,59 +1,5 @@
 #! /bin/sh
 #panel script for bspwm using i3 style workspace indicator
-
-# rootcomas panel_bar
-. ./panel_colors
-
-while read -r line ; do
-    case $line in
-        X*)
-            info="${line#?}"
-            if [ -n "$info" ]; then
-                info="%{Iicons/xbm/info_03.xbm} ${info} "
-            fi
-            ;;
-        M*)
-            music="${line#?}"
-            if [ -n "$music" ]; then
-                music=" %{A:scripts/mpd-clipboard.sh $PANEL_FIFO:} %{Iicons/xbm/phones.xbm}%{A} %{A:mpc -q toggle:}${music}%{A}%{A:mpc -q prev:} %{Iicons/xbm/prev.xbm} %{A}%{A:mpc -q next:} %{Iicons/xbm/next.xbm} %{A} "
-            fi
-            ;;
-        S*)
-            time="${line#?}" #http://wiki.bash-hackers.org/syntax/pe#substring_removal
-            ;;
-        T*)
-            title="${line#?}"
-            ;;
-        W*)
-            # bspwm internal state
-            desktops=""
-            IFS=':'
-            set -- ${line#?}
-            while [ $# -gt 0 ] ; do
-                item=$1
-                name=${item#?}
-                case $item in
-                    # always show focused desktops
-                    O*|F*|U*)
-                        desktops="${desktops}%{F$COLOR_FOCUSED_DESKTOP_FG}%{B$COLOR_FOCUSED_DESKTOP_BG} ${name} %{B-}%{F-}"
-                        ;;
-                    # show used unfocused (hide free unused)
-                    o*|u*)#f*
-                        desktops="${desktops}%{F$COLOR_DESKTOP_FG}%{B$COLOR_DESKTOP_BG}%{A:bspc desktop -f ${name}:} ${name} %{A}%{B-}%{F-}"
-                        ;;
-                esac
-                shift
-            done
-            ;;
-    esac
-    printf "%s\n" "%{l}%{A4:bspc desktop -f next.occupied:}%{A5:bspc desktop -f prev.occupied:}${desktops}%{A}%{A}%{c}${title}%{r}${info}${music}%{Iicons/xbm/clock.xbm} ${time} "
-done
-
-# rootcomas panel pipe 
-cat $PANEL_FIFO | ./panel_bar | bar -g x16 -F "$COLOR_FOREGROUND" -B "$COLOR_BACKGROUND" -f "$PANEL_FONT_FAMILY" | while read -r line; do $line; done
-
-
-wait
 # codezen panel
 
 # Absorb all of the rote variable setting to make our panel self-contained
@@ -174,108 +120,66 @@ function bat_percent {
 num_mon=$(bspc query -M | wc -l)
  
 wm_info_array=("" "" "" "" "")
- 
+
+# rootcomas panel_bar
+. ./panel_colors
 function panel_bar {
-    while read line < $PANEL_FIFO; do
-        case $line in
-            S*)
-                # clock output
-                date="${line#?}"
-                ;;
-            B*)
-                # battery output
-                percent="${line#?}"
-                ;;
-            T*)
-                # xtitle output
-                title="%{F$COLOR_TITLE_FG}%{B$COLOR_TITLE_BG} ${line#?} %{B-}%{F-}"
-                ;;
-            W*)
-                # bspwm internal state
-                wm_infos=""
-                cur_mon=-1
-                desktop_num=1
- 
-                IFS=':'
-                set -- ${line#?}
-                while [ $# -gt 0 ] ; do
-                    item=$1
-                    name=${item#?}
-                    case $item in
-                        M*)
-                            # active monitor
-                            cur_mon=$((cur_mon + 1))
-                            wm_infos=""
-                            if [ $num_mon -gt 1 ] ; then
-                                wm_infos="$wm_infos %{F$COLOR_ACTIVE_MONITOR_FG}%{B$COLOR_ACTIVE_MONITOR_BG} ${name} %{B-}%{F-}  "
-                            fi
-                            ;;
-                        m*)
-                            # inactive monitor
-                            cur_mon=$((cur_mon + 1))
-                            wm_infos=""
-                            if [ $num_mon -gt 1 ] ; then
-                                wm_infos="$wm_infos %{F$COLOR_INACTIVE_MONITOR_FG}%{B$COLOR_INACTIVE_MONITOR_BG} ${name} %{B-}%{F-}  "
-                            fi
-                            ;;
-                        O*)
-                            # focused occupied desktop
-                            wm_infos="$wm_infos%{F$COLOR_FOCUSED_OCCUPIED_FG}%{B$COLOR_FOCUSED_OCCUPIED_BG}%{U$COLOR_FOREGROUND}%{+u} ${desktop_num}. ${name} %{-u}%{B-}%{F-}"
-                            desktop_num=$((desktop_num + 1))
-                            ;;
-                        F*)
-                            # focused free desktop
-                            wm_infos="$wm_infos%{F$COLOR_FOCUSED_FREE_FG}%{B$COLOR_FOCUSED_FREE_BG}%{U$COLOR_FOREGROUND}%{+u} ${desktop_num}. ${name} %{-u}%{B-}%{F-}"
-                            desktop_num=$((desktop_num + 1))
-                            ;;
-                        U*)
-                            # focused urgent desktop
-                            wm_infos="$wm_infos%{F$COLOR_FOCUSED_URGENT_FG}%{B$COLOR_FOCUSED_URGENT_BG}%{U$COLOR_FOREGROUND}%{+u} ${desktop_num}. ${name} %{-u}%{B-}%{F-}"
-                            desktop_num=$((desktop_num + 1))
-                            ;;
-                        o*)
-                            # occupied desktop
-                            wm_infos="$wm_infos%{F$COLOR_OCCUPIED_FG}%{B$COLOR_OCCUPIED_BG} ${desktop_num}. ${name} %{B-}%{F-}"
-                            desktop_num=$((desktop_num + 1))
-                            ;;
-                        f*)
-                            # free desktop
-                            wm_infos="$wm_infos%{F$COLOR_FREE_FG}%{B$COLOR_FREE_BG} ${desktop_num}. ${name} %{B-}%{F-}"
-                            desktop_num=$((desktop_num + 1))
-                            ;;
-                        u*)
-                            # urgent desktop
-                            wm_infos="$wm_infos%{F$COLOR_URGENT_FG}%{B$COLOR_URGENT_BG} ${desktop_num}. ${name} %{B-}%{F-}"
-                            desktop_num=$((desktop_num + 1))
-                            ;;
-                        L*)
-                            # layout
-                            wm_infos="$wm_infos %{F$COLOR_LAYOUT_FG}%{B$COLOR_LAYOUT_BG} ${name} %{B-}%{F-}"
-                            ;;
-                    esac
-                    shift
-                    wm_info_array[cur_mon]="$wm_infos"
-                done
-                ;;
-        esac
- 
-        if [ $num_mon -eq 1 ]; then
-            fmt="%{l}${wm_info_array[0]}%{c}${title}%{r}${percent} ${date}"
-        elif [ $num_mon -eq 2 ]; then
-            fmt="%{l}${wm_info_array[0]}%{c}${title}%{S+}%{l}${wm_info_array[1]}%{r}${percent} ${date}"
-        else
-            # Same as 2 -- needs someone to test
-            fmt="%{l}${wm_info_array[0]}%{c}${title}%{S+}%{l}${wm_info_array[1]}%{r}${percent} ${date}"
-        fi
- 
-        printf "%s\n" "$fmt"
-    done
+ while read -r line ; do
+    case $line in
+        X*)
+            info="${line#?}"
+            if [ -n "$info" ]; then
+                info="%{Iicons/xbm/info_03.xbm} ${info} "
+            fi
+            ;;
+        M*)
+            music="${line#?}"
+            if [ -n "$music" ]; then
+                music=" %{A:scripts/mpd-clipboard.sh $PANEL_FIFO:} %{Iicons/xbm/phones.xbm}%{A} %{A:mpc -q toggle:}${music}%{A}%{A:mpc -q prev:} %{Iicons/xbm/prev.xbm} %{A}%{A:mpc -q next:} %{Iicons/xbm/next.xbm} %{A} "
+            fi
+            ;;
+        S*)
+            time="${line#?}" #http://wiki.bash-hackers.org/syntax/pe#substring_removal
+            ;;
+        T*)
+            title="${line#?}"
+            ;;
+        W*)
+            # bspwm internal state
+            desktops=""
+            IFS=':'
+            set -- ${line#?}
+            while [ $# -gt 0 ] ; do
+                item=$1
+                name=${item#?}
+                case $item in
+                    # always show focused desktops
+                    O*|F*|U*)
+                        desktops="${desktops}%{F$COLOR_FOCUSED_DESKTOP_FG}%{B$COLOR_FOCUSED_DESKTOP_BG} ${name} %{B-}%{F-}"
+                        ;;
+                    # show used unfocused (hide free unused)
+                    o*|u*)#f*
+                        desktops="${desktops}%{F$COLOR_DESKTOP_FG}%{B$COLOR_DESKTOP_BG}%{A:bspc desktop -f ${name}:} ${name} %{A}%{B-}%{F-}"
+                        ;;
+                esac
+                shift
+            done
+            ;;
+    esac
+    printf "%s\n" "%{l}%{A4:bspc desktop -f next.occupied:}%{A5:bspc desktop -f prev.occupied:}${desktops}%{A}%{A}%{c}${title}%{r}${info}${music}%{Iicons/xbm/clock.xbm} ${time} "
+ done
 }
- 
+
 # Actually invoking the panel and piping to bar
  
 panel_bar | bar -g x$PANEL_HEIGHT -f "$PANEL_FONT_FAMILY" -F "$COLOR_FOREGROUND" -B "$COLOR_BACKGROUND" &
  
+ # rootcomas panel pipe 
+cat $PANEL_FIFO | ./panel_bar | bar -g x16 -F "$COLOR_FOREGROUND" -B "$COLOR_BACKGROUND" -f "$PANEL_FONT_FAMILY" | while read -r line; do $line; done
+
+
+wait
+
 # Hostname tweaks, including forcing stalonetray into a reasonable place, and
 # starting the battery monitor on my laptop
  
