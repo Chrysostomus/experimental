@@ -66,15 +66,31 @@ if ! can_suspend_to_disk && ! btrfs_root; then
 	mkswap /swapfile
 	swapon /swapfile
 	echo '/swapfile	swap	swap	defaults	0	0' >> /etc/fstab
-	#backup old /etc/default/grub
-	cp /etc/default/grub /etc/default/grub.old \
-	&& sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub \
-	&& grub-mkconfig -o /boot/grub/grub.cfg
-		if ! has_resume_hook; then
-			cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.old \
-			&&sed -i s/'filesystem/filesystem resume'/g /etc/mknitcpio.conf
-			for kernel in $(mhwd-kernel -li | sed '1,2d' | awk '{print $2}'); do
-			mkinitcpio -p $kernel
-		done
-		fi
+	#Grub
+	if [ -e /etc/default/grub ]; then
+		cp /etc/default/grub /etc/default/grub.old \
+		&& sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub \
+		&& grub-mkconfig -o /boot/grub/grub.cfg
+	fi
+	#Systemd-boot
+	if [ -e /boot/loader/entries/manjaro.conf ]; then
+		cp /boot/loader/entries/manjaro.conf /boot/loader/entries/manjaro.conf.old \
+		&& sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub
+	fi
+	#Syslinux
+	if [ -e /boot/syslinux/syslinux.cfg ]; then
+		cp /boot/syslinux/syslinux.cfg /boot/syslinux/syslinux.cfg.old \
+		&& sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub
+	fi
+	if [ -e /boot/EFI/arch/refind_linux.conf ]; then
+		cp /boot/EFI/arch/refind_linux.conf /boot/EFI/arch/refind_linux.conf.old \
+		&& sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub
+	fi	
+	if ! has_resume_hook; then
+		cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.old \
+		&&sed -i s/'filesystem/filesystem resume'/g /etc/mknitcpio.conf
+		for kernel in $(mhwd-kernel -li | sed '1,2d' | awk '{print $2}'); do
+		mkinitcpio -p $kernel
+	done
+	fi
 fi
