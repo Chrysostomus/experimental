@@ -11,6 +11,14 @@ root_part() {
     grep " / " /etc/fstab | awk '{print $1}' | sed 's/PARTUUID/UUID/' | sed 's/PARTUUID/UUID/
 }
 
+root_filesystem() {
+    grep " / " /etc/fstab | awk '{print $3}'
+}
+
+btrfs_root () {
+    [[ root_filesystem == btrfs ]]
+}
+
 has_swap_part () {
     grep -qs swap /etc/fstab
 }
@@ -52,7 +60,7 @@ has_resume_hook () {
 #############################
 lock
 
-if ! can_suspend_to_disk; then
+if ! can_suspend_to_disk && ! btrfs_root; then
 	fallocate -l $(echo $swapfilesize) /swapfile
 	chmod 600 /swapfile
 	mkswap /swapfile
