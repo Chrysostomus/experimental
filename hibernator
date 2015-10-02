@@ -90,8 +90,7 @@ if ! can_suspend_to_disk && ! btrfs_root; then
 	if ! has_resume_hook; then
 		cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.old \
 		&&sed -i s/'filesystem/filesystem resume'/g /etc/mknitcpio.conf
-		for kernel in $(mhwd-kernel -li | sed '1,2d' | awk '{print $2}'); do
-		mkinitcpio -p $kernel
+		mkinitcpio -P
 	done
 	fi
 fi
