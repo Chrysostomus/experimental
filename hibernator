@@ -7,7 +7,7 @@ hibernate_offset() {
 }
 
 root_part() {
-    df / | awk 'NR==2 {print $1}'
+    grep " / " /etc/fstab | awk '{print $1}' | sed 's/PARTUUID/UUID/' | sed 's/PARTUUID/UUID/
 }
 
 has_swap_part () {
@@ -51,15 +51,14 @@ has_resume_hook () {
 lock
 
 if ! can_suspend_to_disk; then
-    echo "[powerdown] your first time to use hibernate"
-    echo "creating 2GB /swapfile"
-    dd if=/dev/zero of=/swapfile bs=2M count=1024
+    fallocate -l $1 /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
+    swapon /swapfile
     echo '/swapfile	swap	swap	defaults	0	0' >> /etc/fstab
     #backup old /etc/default/grub
     cp /etc/default/grub /etc/default/grub.old \
-    && sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet loglevel=3 vga=current udev.log-priority=3/' /etc/default/grub \
+    && sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub \
     && grub-mkconfig -o /boot/grub/grub.cfg
     #backup old /boot/refind_linux.conf and add kernel parameters to the file
     cp /boot/refind_linux.conf /boot/refind_linux.conf \
