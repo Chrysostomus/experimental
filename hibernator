@@ -53,7 +53,7 @@ has_resume_hook () {
 lock
 
 if ! can_suspend_to_disk; then
-    fallocate -l $swapfilesize /swapfile
+    fallocate -l $(echo $swapfilesize) /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
     swapon /swapfile
