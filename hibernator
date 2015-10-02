@@ -68,23 +68,24 @@ if ! can_suspend_to_disk && ! btrfs_root; then
 	echo '/swapfile	swap	swap	defaults	0	0' >> /etc/fstab
 	#Grub
 	if [ -e /etc/default/grub ]; then
-		cp /etc/default/grub /etc/default/grub.old \
-		&& sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub \
-		&& grub-mkconfig -o /boot/grub/grub.cfg
+		cp /etc/default/grub /etc/default/grub.old
+		sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/"$/ $(resume_boot_option)"/' /etc/default/grub
+		update-grub
 	fi
 	#Systemd-boot
 	if [ -e /boot/loader/entries/manjaro.conf ]; then
-		cp /boot/loader/entries/manjaro.conf /boot/loader/entries/manjaro.conf.old \
-		&& sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub
+		cp /boot/loader/entries/manjaro.conf /boot/loader/entries/manjaro.conf.old 
+		sed -i '/initrd/s/$/ $(resume_boot_option)/' /boot/loader/entries/manjaro.conf
 	fi
 	#Syslinux
 	if [ -e /boot/syslinux/syslinux.cfg ]; then
-		cp /boot/syslinux/syslinux.cfg /boot/syslinux/syslinux.cfg.old \
-		&& sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub
+		cp /boot/syslinux/syslinux.cfg /boot/syslinux/syslinux.cfg.old 
+		sed -i '/APPEND/s/$/ $(resume_boot_option)/' /boot/syslinux/syslinux.cfg
 	fi
-	if [ -e /boot/EFI/arch/refind_linux.conf ]; then
-		cp /boot/EFI/arch/refind_linux.conf /boot/EFI/arch/refind_linux.conf.old \
-		&& sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub
+	#refind
+	if [ -e /boot/refind_linux.conf ]; then
+		cp /boot/refind_linux.conf /boot/refind_linux.conf.old
+		sed -i 's/"$/ $(resume_boot_option)"/' /boot/refind_linux.conf
 	fi	
 	if ! has_resume_hook; then
 		cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.old \
