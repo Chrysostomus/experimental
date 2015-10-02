@@ -2,6 +2,7 @@
 # script to enable hibernation noninteractively, based on powerdown-functions
 shopt -s nullglob extglob
 
+swapfilesize=${1-4G}
 hibernate_offset() {
     filefrag -v /swapfile | awk 'NR==4 {print $4}' | tr -d .
 }
@@ -44,14 +45,15 @@ if [[ $EUID != 0 ]]; then
     echo "[hibernator] must be run as root"
     exit 1
 fi
+
 has_resume_hook () {
-    grep -qs resume /etc/mkinitcpio.conf
+    grep -qs resume /etc/mkinitcpio.conf || grep -qs systemd /etc/mkinitcpio.conf
 }
 #############################
 lock
 
 if ! can_suspend_to_disk; then
-    fallocate -l $1 /swapfile
+    fallocate -l $swapfilesize /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
     swapon /swapfile
@@ -60,10 +62,6 @@ if ! can_suspend_to_disk; then
     cp /etc/default/grub /etc/default/grub.old \
     && sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT/ s/quiet/$(resume_boot_option) quiet/' /etc/default/grub \
     && grub-mkconfig -o /boot/grub/grub.cfg
-    #backup old /boot/refind_linux.conf and add kernel parameters to the file
-    cp /boot/refind_linux.conf /boot/refind_linux.conf \
-    &&echo -e "$(head -n 1 /boot/refind_linux.conf)" | \
-    sed 's/\"$/ $(resume_boot_option) loglevel=3 vga=current udev.log-priority=3\"/'\n$(cat /boot/refind_linux.conf)" > /boot/refind_linux.conf
 		if ! has_resume_hook; then
 			cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.old \
 			&&sed -i s/'filesystem/filesystem resume'/g /etc/mknitcpio.conf
