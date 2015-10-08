@@ -1,41 +1,20 @@
+
 #! /bin/sh
 #panel script for bspwm using i3 style workspace indicator
 # codezen panel
 
-# Absorb all of the rote variable setting to make our panel self-contained
- 
-# From example .profile changes
+#set height and font if unset 
  
 PANEL_FIFO="$HOME/.config/bspwm/panfifo"
-PANEL_HEIGHT="16"
-PANEL_FONT_FAMILY="-*-terminus-medium-r-normal-*-12-*-*-*-c-*-*-1"
+[[  $PANEL_HEIGHT && ${PANEL_HEIGHT-x} ]] && panel_height=$PANEL_HEIGHT || panel_height='25'
+[[  $PANEL_FONT_FAMILY && ${PANEL_FONT_FAMILY-x} ]] && mainfont=$PANEL_FONT_FAMILY || mainfont='-zevv-*-*-*-*-*-20-*-*-*-*-*-*-*'
  
 # From panel_colors file
  
-COLOR_FOREGROUND='#FFA3A6AB'
-COLOR_BACKGROUND='#FF34322E'
-COLOR_ACTIVE_MONITOR_FG='#FF34322E'
-COLOR_ACTIVE_MONITOR_BG='#FF58C5F1'
-COLOR_INACTIVE_MONITOR_FG='#FF58C5F1'
-COLOR_INACTIVE_MONITOR_BG='#FF34322E'
-COLOR_FOCUSED_OCCUPIED_FG='#FFF6F9FF'
-COLOR_FOCUSED_OCCUPIED_BG='#FF5C5955'
-COLOR_FOCUSED_FREE_FG='#FFF6F9FF'
-COLOR_FOCUSED_FREE_BG='#FF6D561C'
-COLOR_FOCUSED_URGENT_FG='#FF34322E'
-COLOR_FOCUSED_URGENT_BG='#FFF9A299'
-COLOR_OCCUPIED_FG='#FFA3A6AB'
-COLOR_OCCUPIED_BG='#FF34322E'
-COLOR_FREE_FG='#FF6F7277'
-COLOR_FREE_BG='#FF34322E'
-COLOR_URGENT_FG='#FFF9A299'
-COLOR_URGENT_BG='#FF34322E'
-COLOR_LAYOUT_FG='#FFA3A6AB'
-COLOR_LAYOUT_BG='#FF34322E'
-COLOR_TITLE_FG='#FFA3A6AB'
-COLOR_TITLE_BG='#FF34322E'
-COLOR_STATUS_FG='#FFA3A6AB'
-COLOR_STATUS_BG='#FF34322E'
+COLOR_FOCUSED_DESKTOP_FG="F#FF99CC99"
+COLOR_FOCUSED_DESKTOP_BG="F#FF000000"
+COLOR_DESKTOP_FG='#FFF6F9FF'
+COLOR_DESKTOP_BG="F#FF000000"
  
 # Kill any panel processes older than us, instead of bailing like the example
 # does. That caused one too many panel-less boots for me.
@@ -48,7 +27,7 @@ done
  
 killall -9 stalonetray
 killall -9 xtitle
- 
+killall -9 conky
 # Setup taken from example, tell bspwm to avoid our status/tray and to start
 # sending status updates to a FIFO
  
@@ -61,6 +40,8 @@ bspc config top_padding $PANEL_HEIGHT
 bspc control --subscribe > "$PANEL_FIFO" &
 # Title
 xtitle -sf 'T%s' > "$PANEL_FIFO" &
+conky -c ~/.config/bspwm/panel/conkyrc > "$PANEL_FIFO" &
+volume_status.sh &
  
 # Now panel_bar, which was mostly taken from the example panel_bar, with a
 # handful of improvements.
@@ -71,33 +52,30 @@ xtitle -sf 'T%s' > "$PANEL_FIFO" &
 # - added B header for battery
 # - all the desktop indicators are enumerated
  
+logo="%{A:dmainmenu.sh &disown:}  %{A}"
+
 num_mon=$(bspc query -M | wc -l)
- 
-wm_info_array=("" "" "" "" "")
 
 # rootcomas panel_bar
-. ./panel_colors
+
 function panel_bar {
  while read -r line ; do
     case $line in
-        X*)
-            info="${line#?}"
-            if [ -n "$info" ]; then
-                info="%{Iicons/xbm/info_03.xbm} ${info} "
-            fi
-            ;;
-        M*)
-            music="${line#?}"
-            if [ -n "$music" ]; then
-                music=" %{A:scripts/mpd-clipboard.sh $PANEL_FIFO:} %{Iicons/xbm/phones.xbm}%{A} %{A:mpc -q toggle:}${music}%{A}%{A:mpc -q prev:} %{Iicons/xbm/prev.xbm} %{A}%{A:mpc -q next:} %{Iicons/xbm/next.xbm} %{A} "
-            fi
-            ;;
         S*)
             time="${line#?}" #http://wiki.bash-hackers.org/syntax/pe#substring_removal
             ;;
         T*)
             title="${line#?}"
             ;;
+	L*)
+	    layout="${name}"
+	    ;;
+	C*)
+            conky_infos="%{F#FF99CC99}${line#?}"
+            ;;
+	V*)
+            volume_infos="${RA}%{F#FF99CC99} ${line#?} "
+            ;;    	    
         W*)
             # bspwm internal state
             desktops=""
@@ -120,16 +98,16 @@ function panel_bar {
             done
             ;;
     esac
-    printf "%s\n" "%{l}%{A4:bspc desktop -f next.occupied:}%{A5:bspc desktop -f prev.occupied:}${desktops}%{A}%{A}%{c}${title}%{r}${info}${music}%{Iicons/xbm/clock.xbm} ${time} "
+    printf "%s\n" "%{l}${logo}${desktops} ${layout}%{F#FFF6F9FF}%{c}${title}%{r}$volume_infos ${conky_infos} "
  done
 }
 
 # Actually invoking the panel and piping to bar
  
-panel_bar | bar -g x$PANEL_HEIGHT -f "$PANEL_FONT_FAMILY" -F "$COLOR_FOREGROUND" -B "$COLOR_BACKGROUND" &
+cat $PANEL_FIFO | panel_bar | lemonbar -g x$panel_height -f "-zevv-*-*-*-*-*-20-*-*-*-*-*-*-*" -o -3 -f "-*-ionicons-medium-r-normal-*-25-*-*-*-p-*-*-1" -F '#FF99CC99' -B '#FF000000' | sh &
  
  # rootcomas panel pipe 
-cat $PANEL_FIFO | ./panel_bar | bar -g x16 -F "$COLOR_FOREGROUND" -B "$COLOR_BACKGROUND" -f "$PANEL_FONT_FAMILY" | while read -r line; do $line; done
+#cat $PANEL_FIFO | ./panel_bar | lemonbar -g x$panel_height -F "$COLOR_FOREGROUND" -B "$COLOR_BACKGROUND" -f "$PANEL_FONT_FAMILY" | while read -r line; do $line; done
 
 
 wait
