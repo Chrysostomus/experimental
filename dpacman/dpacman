@@ -4,13 +4,32 @@ explicitinst=$(pacman -Qqen)
 installed=$(pacman -Qq)
 #set default terminal
 
-case
+term=${TERMINAL:-urxvt}
+
+case $option in
+    Install           ) $term sudo pacman -S $($available | dmenu -p 'select package to install');;
+    Uninstall         ) $term sudo pacman -Rsn $($installed | dmenu -p 'select package to remove);;
+    Update             ) $term sudo pacman -Syu;;
+    Downgrade          ) $term sudo downgrade $installed;;
+    Backup          ) $term $explicitinst > .$HOME/packagebackup;;
+    Clean               ) exec dwm;;
+    RemoveOrphan     ) exec enlightenment_start;;
+    RemoveOrphans               ) exec startede;;
+    FullClean           ) exec startfluxbox;;
+    CheckUpdates             ) exec gnome-session;;
+    RestoreBackup     ) exec gnome-session --session=gnome-classic;;
+    EditMirrorlist           ) exec i3;;
+    RankMirrors             ) exec icewm-session;;
+    ConfigurePacman               ) exec jwm;;
+    # No known session, try to run it as command
+    *) exec $1;;
+esac 
 
 #Install package
 $TERMINAL sudo pacman -S $($available | dmenu)
 #Remove package
-$TERMINAL sudo pacman -Rsn $($installed | dmenu)
+$term sudo pacman -Rsn $($installed | dmenu)
 #Back up apps
-$TERMINAL $explicitinst > .$HOME/packagebackup
+$term $explicitinst > .$HOME/packagebackup
 #Downgrade package
-$TERMINAL sudo downgrade $available
+$term sudo downgrade $installed
