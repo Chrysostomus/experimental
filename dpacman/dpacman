@@ -1,7 +1,10 @@
-#!/bin/bas
+#!/bin/bash
 available=$(pacman -Sl | awk '{ print $2}')
 explicitinst=$(pacman -Qqen)
 installed=$(pacman -Qq)
+#set default terminal
+
+case
 
 #Install package
 $TERMINAL sudo pacman -S $($available | dmenu)
@@ -9,5 +12,5 @@ $TERMINAL sudo pacman -S $($available | dmenu)
 $TERMINAL sudo pacman -Rsn $($installed | dmenu)
 #Back up apps
 $TERMINAL $explicitinst > .$HOME/packagebackup
-#Downgrade packagr
+#Downgrade package
 $TERMINAL sudo downgrade $available
