@@ -1,0 +1,13 @@
+#!/bin/bas
+available=$(pacman -Sl | awk '{ print $2}')
+explicitinst=$(pacman -Qqen)
+installed=$(pacman -Qq)
+
+#Install package
+$TERMINAL sudo pacman -S $($available | dmenu)
+#Remove package
+$TERMINAL sudo pacman -Rsn $($installed | dmenu)
+#Back up apps
+$TERMINAL $explicitinst > .$HOME/packagebackup
+#Downgrade packagr
+$TERMINAL sudo downgrade $available
