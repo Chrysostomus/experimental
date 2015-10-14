@@ -26,7 +26,7 @@ case $option in
     Remove orphan      ) $term sudo pacman -Rsn $($orphans | dmenu $DMENU_OPTIONS -p 'Select orphan to remove';;
     Remove orphans     ) $term sudo pacman -Rsn $orphans;;
     Deep clean         ) $term sudo pacman -Scc;;
-    Check updates      ) update-notifier; $term less /tmp/updates;;
+    Check updates      ) update-notifier; xdg-open /tmp/updates;;
     Restore Backup     ) $term sudo pacman -Syu $(cat $HOME/.packagebackup);;
     Edit mirrorlist    ) $term sudo pacman-mirrors -i ;;
     Rank mirrors       ) $term sudo pacman-mirrors -g ;;
