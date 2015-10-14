@@ -14,7 +14,7 @@ orphans=$(pacman -Qtdq)
 #set default terminal
 term=${TERMINAL:-urxvt}
 
-option=$(echo -e "Install\nUninstall\nUpdate\nClean\nDeep clean\nDowngrade\nRemove orphan\nRemove orphans\nCheck updates\nEdit mirrorlist\nRank mirrors\nConfigure pacman" | dmenu $DMENU_OPTIONS
+option=$(echo -e "Upkeep \nInstall\nUninstall\nUpdate\nClean\nDeep clean\nDowngrade\nRemove orphan\nRemove orphans\nCheck updates\nEdit mirrorlist\nRank mirrors\nConfigure pacman\nBackup packages\nRestore backup" | dmenu $DMENU_OPTIONS
 
 case $option in
     Install            ) $term sudo pacman -S $($available | dmenu  $DMENU_OPTIONS -p 'select package to install');;
@@ -23,13 +23,13 @@ case $option in
     Downgrade          ) $term sudo downgrade $installed;;
     Backup             ) $term $explicitinst > .$HOME/.packagebackup;;
     Clean              ) $term sudo paccache -ruk0; o paccache -ruk2;;
-    Remove orphan       ) $term sudo pacman -Rsn $($orphans | dmenu $DMENU_OPTIONS -p 'Select orphan to remove';;
-    Remove orphans      ) $term sudo pacman -Rsn $orphans;;
-    Deep clean          ) $term sudo pacman -Scc;;
-    Check updates       ) update-notifier; $term less /tmp/updates;;
-    Restore Backup      ) $term sudo pacman -Syu $(cat $HOME/.packagebackup);;
-    Edit mirrorlist     ) $term sudo pacman-mirrors -i ;;
-    Rank mirrors        ) $term sudo pacman-mirrors -g ;;
-    Configure pacman    ) $term sudo xdg-open /etc/pacman.conf;;
+    Remove orphan      ) $term sudo pacman -Rsn $($orphans | dmenu $DMENU_OPTIONS -p 'Select orphan to remove';;
+    Remove orphans     ) $term sudo pacman -Rsn $orphans;;
+    Deep clean         ) $term sudo pacman -Scc;;
+    Check updates      ) update-notifier; $term less /tmp/updates;;
+    Restore Backup     ) $term sudo pacman -Syu $(cat $HOME/.packagebackup);;
+    Edit mirrorlist    ) $term sudo pacman-mirrors -i ;;
+    Rank mirrors       ) $term sudo pacman-mirrors -g ;;
+    Configure pacman   ) $term sudo xdg-open /etc/pacman.conf;;
 
 esac 
