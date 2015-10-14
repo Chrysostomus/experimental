@@ -86,7 +86,7 @@ NC='\e[0m'
         4)
             echo
             paccache -ruk0
-	    paccache -rk3
+	    paccache -rk2
             echo ""
             echo -e "$NC Unneeded and old package versions removed. To return to pacli press [Enter] $NC"
             read
@@ -95,8 +95,7 @@ NC='\e[0m'
             echo ""
             echo "Do you want to search a package? Put the name below and press [Enter]"
             echo ""
-            read searchpackage
-            pacman -Ss $searchpackage
+            pacman -Ss $(pacman -Slq | pmenu -p 'select package to search >')
             echo ""
             echo -e "$NC The search is complete. To return to pacli press [Enter] $NC"
             read
@@ -106,7 +105,7 @@ NC='\e[0m'
             echo "Do you want to check specific information about a package? Put the name below and press [Enter]"
             echo ""
             read searchpackage
-            pacman -Si $searchpackage
+            pacman -Si $(pacman -Slq | pmenu -p 'select package to search >')
             echo ""
             echo -e "$NC The search for information ended. To return to pacli press [Enter] $NC"
             read 
@@ -115,8 +114,7 @@ NC='\e[0m'
             echo ""
             echo "Do you want to install a package? Put the name below and press [Enter]"
             echo ""
-            read installpackage
-            sudo pacman -S $installpackage
+            sudo pacman -S $(pacman -Slq | pmenu -p 'select package to install >')
             echo ""
             echo -e "$NC The package installation is finished. To return to pacli press [Enter] $NC"
             read
@@ -125,8 +123,7 @@ NC='\e[0m'
             echo ""
             echo "Do you want to check specific information about a package?  Put the name below and press [Enter]"
             echo ""
-            read searchpackage
-            pacman -Qi $searchpackage
+            pacman -Qi $(pacman -Qq | pmenu -p 'select a package >)
             echo ""
             echo -e "$NC All information displayed. To return to pacli press [Enter] $NC"
             read
@@ -135,8 +132,7 @@ NC='\e[0m'
             echo ""
             echo "Do you want to uninstall a single package? All Dependencies will be kept as orphans. Put the name below and press [Enter]"
             echo ""
-            read uninstallpackage
-            sudo pacman -R $uninstallpackage
+            sudo pacman -R $(pacman -Qq | pmenu -p 'select package to uninstall >')
             echo ""
             echo -e "$NC Action completed. To return to pacli press [Enter] $NC"
             read
@@ -146,7 +142,7 @@ NC='\e[0m'
             echo "Do you want to uninstall a package including all its dependencies? Put the name below and press [Enter]"
             echo ""
             read uninstallpackage
-            sudo pacman -Rsn $uninstallpackage
+            sudo pacman -Rsn $(pacman -Qq | pmenu -p 'select package to uninstall >')
             echo ""
             echo -e "$NC Action completed. To return to pacli press [Enter] $NC"
             read
@@ -173,8 +169,7 @@ NC='\e[0m'
             echo ""
             echo "Do you want to list all local files of a package? Put the package name below and press [Enter]"
             echo ""
-            read Packcage
-            pacman -Ql $Packcage
+            pacman -Ql $(pacman -Qq | pmenu -p 'select a package >')
             echo ""
             echo -e "$NC Task completed. To return to pacli press [Enter] $NC"
             read 
@@ -183,8 +178,7 @@ NC='\e[0m'
             echo ""
             echo "Do you want to display the dependency tree of a package? Put the package name below and press [Enter]"
             echo ""
-            read Packcage
-            pactree $Packcage
+            pactree $(pacman -Slq | pmenu -p 'select a package >')
             echo ""
             echo -e "$NC Task completed. To return to pacli press [Enter] $NC"
             read
