@@ -15,19 +15,19 @@ orphans=$(pacman -Qtdq)
 term=${TERMINAL:-urxvt}
 
 case $option in
-    Install           ) $term sudo pacman -S $($available | dmenu -p 'select package to install');;
-    Uninstall         ) $term sudo pacman -Rsn $($installed | dmenu -p 'select package to remove);;
+    Install            ) $term sudo pacman -S $($available | dmenu -p 'select package to install');;
+    Uninstall          ) $term sudo pacman -Rsn $($installed | dmenu -p 'select package to remove);;
     Update             ) $term sudo pacman -Syu;;
     Downgrade          ) $term sudo downgrade $installed;;
-    Backup          ) $term $explicitinst > .$HOME/packagebackup;;
-    Clean               ) exec dwm;;
-    RemoveOrphan     ) $term sudo pacman -Rsn $($orphans | dmenu -p 'Select orphan to remove';;
-    RemoveOrphans               ) $term sudo pacman -Rsn $orphans;;
-    FullClean           ) exec startfluxbox;;
-    CheckUpdates             ) exec gnome-session;;
+    Backup             ) $term $explicitinst > .$HOME/packagebackup;;
+    Clean              ) $term sudo paccache -ruk0; o paccache -ruk2;;
+    RemoveOrphan       ) $term sudo pacman -Rsn $($orphans | dmenu -p 'Select orphan to remove';;
+    RemoveOrphans      ) $term sudo pacman -Rsn $orphans;;
+    FullClean          ) $term sudo pacman -Scc;;
+    CheckUpdates       ) update-notifier; $term less /tmp/updates;;
     RestoreBackup     ) exec gnome-session --session=gnome-classic;;
-    EditMirrorlist           ) exec i3;;
-    RankMirrors             ) exec icewm-session;;
+    EditMirrorlist     ) $term sudo paman-mirrors -i ;;
+    RankMirrors        ) $term sudo pacman-mirrors -g ;;
     ConfigurePacman               ) exec jwm;;
     # No known session, try to run it as command
     *) exec $1;;
