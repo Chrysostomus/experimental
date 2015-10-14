@@ -1,7 +1,15 @@
 #!/bin/bash
-available=$(pacman -Sl | awk '{ print $2}')
+
+
+if ! [ -f "$HOME/.dmenurc" ]; then
+	cp /usr/share/dmenu/dmenurc $HOME/.dmenurc
+fi
+. $HOME/.dmenurc
+
+available=$(pacman -Slq)
 explicitinst=$(pacman -Qqen)
 installed=$(pacman -Qq)
+orphans=$(pacman -Qtdq)
 #set default terminal
 
 term=${TERMINAL:-urxvt}
@@ -13,8 +21,8 @@ case $option in
     Downgrade          ) $term sudo downgrade $installed;;
     Backup          ) $term $explicitinst > .$HOME/packagebackup;;
     Clean               ) exec dwm;;
-    RemoveOrphan     ) exec enlightenment_start;;
-    RemoveOrphans               ) exec startede;;
+    RemoveOrphan     ) $term sudo pacman -Rsn $($orphans | dmenu -p 'Select orphan to remove';;
+    RemoveOrphans               ) $term sudo pacman -Rsn $orphans;;
     FullClean           ) exec startfluxbox;;
     CheckUpdates             ) exec gnome-session;;
     RestoreBackup     ) exec gnome-session --session=gnome-classic;;
@@ -24,12 +32,3 @@ case $option in
     # No known session, try to run it as command
     *) exec $1;;
 esac 
-
-#Install package
-$TERMINAL sudo pacman -S $($available | dmenu)
-#Remove package
-$term sudo pacman -Rsn $($installed | dmenu)
-#Back up apps
-$term $explicitinst > .$HOME/packagebackup
-#Downgrade package
-$term sudo downgrade $installed
