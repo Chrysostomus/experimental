@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 #  updated on 17.05.2015 16:11:02
@@ -123,7 +122,7 @@ NC='\e[0m'
             echo ""
             echo "Do you want to check specific information about a package?  Put the name below and press [Enter]"
             echo ""
-            pacman -Qi $(pacman -Qq | pmenu -p 'select a package >)
+            pacman -Qi $(pacman -Qq | pmenu -p 'select a package' >)
             echo ""
             echo -e "$NC All information displayed. To return to pacli press [Enter] $NC"
             read
