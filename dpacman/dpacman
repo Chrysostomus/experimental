@@ -1,34 +1,35 @@
 #!/bin/bash
 
-
 if ! [ -f "$HOME/.dmenurc" ]; then
 	cp /usr/share/dmenu/dmenurc $HOME/.dmenurc
 fi
 . $HOME/.dmenurc
 
+#pacman package lists
 available=$(pacman -Slq)
 explicitinst=$(pacman -Qqen)
 installed=$(pacman -Qq)
 orphans=$(pacman -Qtdq)
-#set default terminal
 
+#set default terminal
 term=${TERMINAL:-urxvt}
 
+option=$(echo -e "Install\nUninstall\nUpdate\nClean\nDeep clean\nDowngrade\nRemove orphan\nRemove orphans\nCheck updates\nEdit mirrorlist\nRank mirrors\nConfigure pacman" | dmenu $DMENU_OPTIONS
+
 case $option in
-    Install            ) $term sudo pacman -S $($available | dmenu -p 'select package to install');;
-    Uninstall          ) $term sudo pacman -Rsn $($installed | dmenu -p 'select package to remove);;
+    Install            ) $term sudo pacman -S $($available | dmenu  $DMENU_OPTIONS -p 'select package to install');;
+    Uninstall          ) $term sudo pacman -Rsn $($installed | dmenu $DMENU_OPTIONS -p 'select package to remove);;
     Update             ) $term sudo pacman -Syu;;
     Downgrade          ) $term sudo downgrade $installed;;
-    Backup             ) $term $explicitinst > .$HOME/packagebackup;;
+    Backup             ) $term $explicitinst > .$HOME/.packagebackup;;
     Clean              ) $term sudo paccache -ruk0; o paccache -ruk2;;
-    RemoveOrphan       ) $term sudo pacman -Rsn $($orphans | dmenu -p 'Select orphan to remove';;
-    RemoveOrphans      ) $term sudo pacman -Rsn $orphans;;
-    FullClean          ) $term sudo pacman -Scc;;
-    CheckUpdates       ) update-notifier; $term less /tmp/updates;;
-    RestoreBackup     ) exec gnome-session --session=gnome-classic;;
-    EditMirrorlist     ) $term sudo paman-mirrors -i ;;
-    RankMirrors        ) $term sudo pacman-mirrors -g ;;
-    ConfigurePacman               ) exec jwm;;
-    # No known session, try to run it as command
-    *) exec $1;;
+    Remove orphan       ) $term sudo pacman -Rsn $($orphans | dmenu $DMENU_OPTIONS -p 'Select orphan to remove';;
+    Remove orphans      ) $term sudo pacman -Rsn $orphans;;
+    Deep clean          ) $term sudo pacman -Scc;;
+    Check updates       ) update-notifier; $term less /tmp/updates;;
+    Restore Backup      ) $term sudo pacman -Syu $(cat $HOME/.packagebackup);;
+    Edit mirrorlist     ) $term sudo pacman-mirrors -i ;;
+    Rank mirrors        ) $term sudo pacman-mirrors -g ;;
+    Configure pacman    ) $term sudo xdg-open /etc/pacman.conf;;
+
 esac 
