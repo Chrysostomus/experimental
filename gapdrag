@@ -1,0 +1,28 @@
+#!/bin/bash
+#intented to allow resizong bspwm windows by dragging them from window gap. Requires rootmenu
+
+eval $(xdotool getmouselocation --shell)
+IFS=" " read -a window <<< $(wattr whxy $(pfw))
+
+# Distance to each side
+up=$(expr "$Y" - "${window[3]}")
+down=$(expr "${window[3]}" + "${window[1]}" - "$Y" )
+left=$(expr "$X" - "${window[2]}")
+right=$(expr "${window[2]}" + "${window[0]}" - "$X" )
+
+# Find the maximal distance to window edge
+dir_final="up"
+for dir in down left right; do
+if [ "${!dir}" -gt "${!dir_final}" ]; then
+    dir_final=$dir
+fi
+done
+
+#move mouse inside nearest window edge by moving towards furthest edge by amount of window gap
+[[ $dir_final == up ]] && angle=0
+[[ $dir_final == right ]] && angle=90
+[[ $dir_final == down ]] && angle=180
+[[ $dir_final == left ]] && angle=270
+
+xdotool mousemove_relative --sync $gap $angle;
+bspc pointer -g resize_corner
