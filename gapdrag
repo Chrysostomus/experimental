@@ -4,25 +4,25 @@
 eval $(xdotool getmouselocation --shell)
 IFS=" " read -a window <<< $(wattr whxy $(pfw))
 
-# Distance to each side
-up=$(expr "$Y" - "${window[3]}")
-down=$(expr "${window[3]}" + "${window[1]}" - "$Y" )
-left=$(expr "$X" - "${window[2]}")
-right=$(expr "${window[2]}" + "${window[0]}" - "$X" )
+# location of each side of focused window
+up=$(expr "${window[3]}")
+down=$(expr "${window[3]}" + "${window[1]}")
+left=$(expr "${window[2]}")
+right=$(expr "${window[2]}" + "${window[0]}")
 
-# Find the maximal distance to window edge
-dir_final="up"
-for dir in down left right; do
-if [ "${!dir}" -gt "${!dir_final}" ]; then
-    dir_final=$dir
-fi
-done
+# maximum co-ordinates of desired mouse location, 5 pixels inside window
+maxx=$(echo "$right - 5" | bc)
+minx=$(echo "$left + 5" | bc)
+miny=$(echo "$up + 5" | bc)
+maxy=$(echo "$down - 5" | bc)
 
-#move mouse inside nearest window edge by moving towards furthest edge by amount of window gap
-[[ $dir_final == up ]] && angle=0
-[[ $dir_final == right ]] && angle=90
-[[ $dir_final == down ]] && angle=180
-[[ $dir_final == left ]] && angle=270
+#set final position to current or at most within window
+XP=$X
+[[ $XP -gt $maxx ]] && XP=$maxx
+[[ $XP -lt $minx ]] && XP=$minx
+YP=$Y
+[[ $YP -lt $miny ]] && YP=$miny
+[[ $YP -gt $maxy ]] && YP=$maxy
 
-xdotool mousemove_relative --sync $gap $angle;
+xdotool mousemove --sync $XP $YP;
 bspc pointer -g resize_corner
