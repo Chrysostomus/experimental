@@ -5,16 +5,10 @@ eval $(xdotool getmouselocation --shell)
 IFS=" " read -a window <<< $(wattr whxy $(pfw))
 
 # location of each side of focused window
-up=$(expr "${window[3]}")
-down=$(expr "${window[3]}" + "${window[1]}")
-left=$(expr "${window[2]}")
-right=$(expr "${window[2]}" + "${window[0]}")
-
-# maximum co-ordinates of desired mouse location, 5 pixels inside window
-maxx=$(echo "$right - 5" | bc)
-minx=$(echo "$left + 5" | bc)
-miny=$(echo "$up + 5" | bc)
-maxy=$(echo "$down - 5" | bc)
+miny=$(("${window[3]}" + 5))
+maxy=$(("${window[3]}" + "${window[1]}" - 5))
+minx=$(("${window[2]}" + 5))
+maxx=$(("${window[2]}" + "${window[0]}" - 5))
 
 #set final position to current or at most within window
 XP=$X
@@ -25,4 +19,6 @@ YP=$Y
 [[ $YP -gt $maxy ]] && YP=$maxy
 
 xdotool mousemove --sync $XP $YP;
+xdotool keydown super;
+xdotool mousedown 
 bspc pointer -g resize_corner
