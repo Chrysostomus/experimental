@@ -2,7 +2,7 @@
 #intented to allow resizong bspwm windows by dragging them from window gap. Requires rootmenu
 
 eval $(xdotool getmouselocation --shell)
-IFS=" " read -a window <<< $(wattr whxy $(pfw))
+IFS=" " read -a window <<< $(wattr whxy $(bspc query -W -w focused))
 
 # location of each side of focused window
 miny=$(("${window[3]}" + 5))
